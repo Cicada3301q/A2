@@ -65,22 +65,32 @@ public class ObjectInspector {
 
 	{
 
-		if (ObjClass.getDeclaredFields().length >= 1) {
-			Field f = ObjClass.getDeclaredFields()[0];
+		Field[] fields = ObjClass.getDeclaredFields();
 
-			f.setAccessible(true);
+		for (Field field : fields) {
+			field.setAccessible(true);
+			String fieldName = field.getName();
+			Class<?> fieldType = field.getType();
+			int modifiers = field.getModifiers();
 
-			if (!f.getType().isPrimitive())
-				objectsToInspect.addElement(f);
+			System.out.println("Field Name: " + fieldName);
+			System.out.println("Field Type: " + fieldType.getName());
+			System.out.println("Modifiers: " + Modifier.toString(modifiers));
 
 			try {
+				Object fieldValue = field.get(obj);
+				System.out.println("Field Value: " + fieldValue);
 
-				System.out.println("Field: " + f.getName() + " = " + f.get(obj));
+				if (fieldValue != null && !fieldType.isPrimitive()) {
+					objectsToInspect.addElement(fieldValue);
+				}
 			} catch (Exception e) {
+				// Handle exceptions appropriately, e.g., log or throw
 			}
 		}
 
-		if (ObjClass.getSuperclass() != null)
+		if (ObjClass.getSuperclass() != null) {
 			inspectFields(obj, ObjClass.getSuperclass(), objectsToInspect);
+		}
 	}
 }
