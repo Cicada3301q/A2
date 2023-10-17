@@ -11,6 +11,7 @@ Last Updated: Oct 23, 2005
 //step 1 create all field, method, constructor inspector methods
 //Step 2 address superclass and interfaces
 //step 3 call inspectSuite on every object discovered, traverse hierachy up to Object. 
+//CHECK, do i properly handly arrays in all instances? in Method, in Field, in Constructor.
 ========================================================================*/
 
 import java.util.*;
@@ -29,9 +30,17 @@ public class ObjectInspector {
 		Class ObjClass = obj.getClass();
 
 		System.out.println("inside inspector: " + obj + " (recursive = " + recursive + ")");
+
+		System.out.println("---- Printing Class Information ----");
 		inspectClassInformation(ObjClass);
-		// inspectMethods(obj, ObjClass, objectsToInspect, inspectedClasses)
+
+		System.out.println("---- Printing Method Information ----");
+		inspectMethods(ObjClass);
+
+		System.out.println("---- Printing Field Information ----");
 		inspectFields(obj, ObjClass, objectsToInspect, inspectedClasses);
+
+		System.out.println("---- Printing Constructor Information ----");
 		inspectConstructors(ObjClass, inspectedClasses);
 
 		if (recursive)
@@ -58,6 +67,44 @@ public class ObjectInspector {
 			System.out.println();
 		} else {
 			System.out.println("Implemented Interfaces: None");
+		}
+	}
+
+	private void inspectMethods(Class<?> ObjClass) {
+		Method[] methods = ObjClass.getDeclaredMethods();
+
+		for (Method method : methods) {
+			String methodName = method.getName();
+			Class<?>[] parameterTypes = method.getParameterTypes();
+			Class<?> returnType = method.getReturnType();
+			Class<?>[] exceptionTypes = method.getExceptionTypes();
+			int modifiers = method.getModifiers();
+
+			System.out.println("Method Name: " + methodName);
+			System.out.println("Return Type: " + returnType.getName());
+			System.out.println("Modifiers: " + Modifier.toString(modifiers));
+
+			if (parameterTypes.length > 0) {
+				System.out.print("Parameter Types: ");
+				for (Class<?> parameterType : parameterTypes) {
+					System.out.print(parameterType.getName() + " ");
+				}
+				System.out.println();
+			} else {
+				System.out.println("Parameter Types: None");
+			}
+
+			if (exceptionTypes.length > 0) {
+				System.out.print("Exceptions Thrown: ");
+				for (Class<?> exceptionType : exceptionTypes) {
+					System.out.print(exceptionType.getName() + " ");
+				}
+				System.out.println();
+			} else {
+				System.out.println("Exceptions Thrown: None");
+			}
+
+			System.out.println();
 		}
 	}
 
