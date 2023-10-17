@@ -5,15 +5,12 @@ Purpose:Demo Object inspector for the Asst2TestDriver
 Location: University of Calgary, Alberta, Canada
 Created By: Jordan Kidney
 Created on:  Oct 23, 2005
-Last Updated: Oct 23, 2005
-
-***********************************************************************
-If you are going to reproduce this code in any way for your asignment 
-rember to include my name at the top of the file toindicate where you
-got the original code from
-***********************************************************************
+Last Updated: Oct 23, 2005 
 
 
+//step 1 create all field, method, constructor inspector methods
+//Step 2 address superclass and interfaces
+//step 3 call inspectSuite on every object discovered, traverse hierachy up to Object. 
 ========================================================================*/
 
 import java.util.*;
@@ -32,15 +29,36 @@ public class ObjectInspector {
 		Class ObjClass = obj.getClass();
 
 		System.out.println("inside inspector: " + obj + " (recursive = " + recursive + ")");
-
-		// inspect the current class
+		inspectClassInformation(ObjClass);
+		// inspectMethods(obj, ObjClass, objectsToInspect, inspectedClasses)
 		inspectFields(obj, ObjClass, objectsToInspect, inspectedClasses);
+		inspectConstructors(ObjClass, inspectedClasses);
 
 		if (recursive)
 			inspectFieldClasses(obj, ObjClass, objectsToInspect, recursive);
 
-		// Call the new method to inspect constructors
-		inspectConstructors(ObjClass, inspectedClasses);
+	}
+
+	private void inspectClassInformation(Class<?> ObjClass) {
+		System.out.println("Declaring Class: " + ObjClass.getName());
+
+		Class<?> superClass = ObjClass.getSuperclass();
+		if (superClass != null) {
+			System.out.println("Immediate Superclass: " + superClass.getName());
+		} else {
+			System.out.println("Immediate Superclass: None");
+		}
+
+		Class<?>[] interfaces = ObjClass.getInterfaces();
+		if (interfaces.length > 0) {
+			System.out.print("Implemented Interfaces: ");
+			for (Class<?> anInterface : interfaces) {
+				System.out.print(anInterface.getName() + " ");
+			}
+			System.out.println();
+		} else {
+			System.out.println("Implemented Interfaces: None");
+		}
 	}
 
 	// -----------------------------------------------------------
@@ -50,19 +68,19 @@ public class ObjectInspector {
 		if (objectsToInspect.size() > 0)
 			System.out.println("---- Inspecting Field Classes ----");
 
-		Enumeration e = objectsToInspect.elements();
-		while (e.hasMoreElements()) {
-			Field f = (Field) e.nextElement();
-			System.out.println("Inspecting Field: " + f.getName());
+		// Enumeration e = objectsToInspect.elements();
+		// while (e.hasMoreElements()) {
+		// Field f = (Field) e.nextElement();
+		// System.out.println("Inspecting Field: " + f.getName());
 
-			try {
-				System.out.println("******************");
-				inspect(f.get(obj), recursive);
-				System.out.println("******************");
-			} catch (Exception exp) {
-				exp.printStackTrace();
-			}
-		}
+		// try {
+		// System.out.println("******************");
+		// inspect(f.get(obj), recursive);
+		// System.out.println("******************");
+		// } catch (Exception exp) {
+		// exp.printStackTrace();
+		// }
+		// }
 	}
 
 	// -----------------------------------------------------------
@@ -70,14 +88,10 @@ public class ObjectInspector {
 			Set<Class<?>> inspectedClasses) {
 		Class<?> currentClass = objClass;
 
-		while (currentClass != null) {
-			if (inspectedClasses.contains(currentClass)) {
-				break; // Avoid re-inspecting the same class
-			}
+		Field[] fields = currentClass.getDeclaredFields();
 
-			Field[] fields = currentClass.getDeclaredFields();
-
-			for (Field field : fields) {
+		for (Field field : fields) {
+			try {
 				field.setAccessible(true);
 				String fieldName = field.getName();
 				Class<?> fieldType = field.getType();
@@ -108,42 +122,44 @@ public class ObjectInspector {
 						objectsToInspect.addElement(fieldValue);
 					}
 				} catch (Exception e) {
-					// Handle exceptions appropriately, e.g., log or throw
+					// Handle exceptions when getting field value appropriately, e.g., log or throw
 				}
+			} catch (InaccessibleObjectException e) {
+				System.out.println("Object not accessible: " + e.getMessage());
+			} catch (SecurityException e) {
+				System.out.println("Security exception: " + e.getMessage());
 			}
-
-			inspectedClasses.add(currentClass);
-			currentClass = currentClass.getSuperclass();
 		}
+
+		currentClass = currentClass.getSuperclass();
+
 	}
 
 	private void inspectConstructors(Class<?> objClass, Set<Class<?>> inspectedClasses) {
 		Class<?> currentClass = objClass;
 
-		while (currentClass != null) {
-			// if (inspectedClasses.contains(currentClass)) {
-			// break; // Avoid re-inspecting the same class
-			// }
+		// if (inspectedClasses.contains(currentClass)) {
+		// break; // Avoid re-inspecting the same class
+		// }
 
-			Constructor<?>[] constructors = currentClass.getDeclaredConstructors();
+		Constructor<?>[] constructors = currentClass.getDeclaredConstructors();
 
-			for (Constructor<?> constructor : constructors) {
-				String constructorName = constructor.getName();
-				int modifiers = constructor.getModifiers();
-				Class<?>[] parameterTypes = constructor.getParameterTypes();
+		for (Constructor<?> constructor : constructors) {
+			String constructorName = constructor.getName();
+			int modifiers = constructor.getModifiers();
+			Class<?>[] parameterTypes = constructor.getParameterTypes();
 
-				System.out.println("Constructor Name: " + constructorName);
-				System.out.println("Modifiers: " + Modifier.toString(modifiers));
+			System.out.println("Constructor Name: " + constructorName);
+			System.out.println("Modifiers: " + Modifier.toString(modifiers));
 
-				System.out.print("Parameter Types: ");
-				for (Class<?> parameterType : parameterTypes) {
-					System.out.print(parameterType.getName() + " ");
-				}
-				System.out.println();
+			System.out.print("Parameter Types: ");
+			for (Class<?> parameterType : parameterTypes) {
+				System.out.print(parameterType.getName() + " ");
 			}
-
-			// inspectedClasses.add(currentClass);
-			currentClass = currentClass.getSuperclass();
+			System.out.println();
 		}
+
+		// inspectedClasses.add(currentClass);
+
 	}
 }
