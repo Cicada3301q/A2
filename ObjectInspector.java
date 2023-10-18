@@ -1,17 +1,13 @@
 /*==========================================================================
-File: ObjectInspector.java
-Purpose:Demo Object inspector for the Asst2TestDriver
+Some code taken from Jordan Kidney 
+Author: Quenten Welch
+Date: October 15th 2023
 
-Location: University of Calgary, Alberta, Canada
-Created By: Jordan Kidney
-Created on:  Oct 23, 2005
-Last Updated: Oct 23, 2005 
-
-
-//step 1 create all field, method, constructor inspector methods
+Desciption: A reflective object inspector
+//step 1 create all field, method, constructor inspector methods COMPLETED
 //Step 2 address superclass and interfaces
 //step 3 call inspectSuite on every object discovered, traverse hierachy up to Object. 
-//CHECK, do i properly handly arrays in all instances? in Method, in Field, in Constructor.
+//CHECK, do i properly handly arrays in all instances? in Method, in Field, in Constructor
 ========================================================================*/
 
 import java.util.*;
@@ -42,10 +38,65 @@ public class ObjectInspector {
 
 		System.out.println("---- Printing Constructor Information ----");
 		inspectConstructors(ObjClass, inspectedClasses);
+		inspectSuperclasses(ObjClass, objectsToInspect, recursive);
+		inspectSuperinterfaces(ObjClass, objectsToInspect, recursive);
 
 		if (recursive)
 			inspectFieldClasses(obj, ObjClass, objectsToInspect, recursive);
 
+	}
+
+	private void inspectSuperclasses(Class<?> ObjClass, Vector<Object> objectsToInspect, boolean recursive) {
+		Class<?> currentClass = ObjClass.getSuperclass();
+		while (currentClass != null) {
+			System.out.println("---- Inspecting Superclass: " + currentClass.getName() + " ----");
+			System.out.println("---- Printing Class Information ----");
+			inspectClassInformation(currentClass);
+
+			System.out.println("---- Printing Method Information ----");
+			inspectMethods(currentClass);
+
+			System.out.println("---- Printing Field Information ----");
+			inspectFields(null, currentClass, objectsToInspect, inspectedClasses);
+
+			System.out.println("---- Printing Constructor Information ----");
+			inspectConstructors(currentClass, inspectedClasses);
+
+			if (recursive) {
+				inspectFieldClasses(null, currentClass, objectsToInspect, recursive);
+			}
+
+			inspectSuperinterfaces(currentClass, objectsToInspect, recursive);
+
+			currentClass = currentClass.getSuperclass();
+		}
+	}
+
+	// Add this method to inspect superinterfaces recursively
+	private void inspectSuperinterfaces(Class<?> ObjClass, Vector<Object> objectsToInspect, boolean recursive) {
+		Class<?>[] interfaces = ObjClass.getInterfaces();
+		for (Class<?> anInterface : interfaces) {
+			if (!inspectedClasses.contains(anInterface)) {
+				System.out.println("---- Inspecting Superinterface: " + anInterface.getName() + " ----");
+				System.out.println("---- Printing Class Information ----");
+				inspectClassInformation(anInterface);
+
+				System.out.println("---- Printing Method Information ----");
+				inspectMethods(anInterface);
+
+				System.out.println("---- Printing Field Information ----");
+				inspectFields(null, anInterface, objectsToInspect, inspectedClasses);
+
+				System.out.println("---- Printing Constructor Information ----");
+				inspectConstructors(anInterface, inspectedClasses);
+
+				if (recursive) {
+					inspectFieldClasses(null, anInterface, objectsToInspect, recursive);
+				}
+
+				inspectSuperinterfaces(anInterface, objectsToInspect, recursive);
+			}
+		}
 	}
 
 	private void inspectClassInformation(Class<?> ObjClass) {
