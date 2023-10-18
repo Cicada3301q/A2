@@ -14,15 +14,15 @@ import java.util.*;
 import java.lang.reflect.*;
 
 public class ObjectInspector {
-	private Set<Class<?>> inspectedClasses;
+	private Set<Class<?>> fieldClasses;
 
 	public ObjectInspector() {
-		inspectedClasses = new HashSet<>();
+		fieldClasses = new HashSet<>();
 	}
 
 	// -----------------------------------------------------------
 	public void inspect(Object obj, boolean recursive) {
-		Vector objectsToInspect = new Vector();
+		Set<Object> objectsToInspect = new HashSet<>();
 		Class ObjClass = obj.getClass();
 
 		System.out.print("inside inspector: ");
@@ -39,10 +39,10 @@ public class ObjectInspector {
 		inspectMethods(ObjClass);
 
 		System.out.println("---- Printing Field Information ----");
-		inspectFields(obj, ObjClass, objectsToInspect, inspectedClasses);
+		inspectFields(obj, ObjClass, objectsToInspect, fieldClasses);
 
 		System.out.println("---- Printing Constructor Information ----");
-		inspectConstructors(ObjClass, inspectedClasses);
+		inspectConstructors(ObjClass, fieldClasses);
 		inspectSuperclasses(ObjClass, objectsToInspect, recursive);
 		inspectSuperinterfaces(ObjClass, objectsToInspect, recursive);
 
@@ -51,7 +51,7 @@ public class ObjectInspector {
 
 	}
 
-	private void inspectSuperclasses(Class<?> ObjClass, Vector<Object> objectsToInspect, boolean recursive) {
+	private void inspectSuperclasses(Class<?> ObjClass, Set<Object> objectsToInspect, boolean recursive) {
 		Class<?> currentClass = ObjClass.getSuperclass();
 		while (currentClass != null) {
 			System.out.println("---- Inspecting Superclass: " + currentClass.getName() + " ----");
@@ -62,10 +62,10 @@ public class ObjectInspector {
 			inspectMethods(currentClass);
 
 			System.out.println("---- Printing Field Information ----");
-			inspectFields(null, currentClass, objectsToInspect, inspectedClasses);
+			inspectFields(null, currentClass, objectsToInspect, fieldClasses);
 
 			System.out.println("---- Printing Constructor Information ----");
-			inspectConstructors(currentClass, inspectedClasses);
+			inspectConstructors(currentClass, fieldClasses);
 
 			if (recursive) {
 				inspectFieldClasses(null, currentClass, objectsToInspect, recursive);
@@ -78,10 +78,10 @@ public class ObjectInspector {
 	}
 
 	// Add this method to inspect superinterfaces recursively
-	private void inspectSuperinterfaces(Class<?> ObjClass, Vector<Object> objectsToInspect, boolean recursive) {
+	private void inspectSuperinterfaces(Class<?> ObjClass, Set<Object> objectsToInspect, boolean recursive) {
 		Class<?>[] interfaces = ObjClass.getInterfaces();
 		for (Class<?> anInterface : interfaces) {
-			if (!inspectedClasses.contains(anInterface)) {
+			if (!fieldClasses.contains(anInterface)) {
 				System.out.println("---- Inspecting Superinterface: " + anInterface.getName() + " ----");
 				System.out.println("---- Printing Class Information ----");
 				inspectClassInformation(anInterface);
@@ -90,16 +90,16 @@ public class ObjectInspector {
 				inspectMethods(anInterface);
 
 				System.out.println("---- Printing Field Information ----");
-				inspectFields(null, anInterface, objectsToInspect, inspectedClasses);
+				inspectFields(null, anInterface, objectsToInspect, fieldClasses);
 
 				System.out.println("---- Printing Constructor Information ----");
-				inspectConstructors(anInterface, inspectedClasses);
+				inspectConstructors(anInterface, fieldClasses);
+
+				inspectSuperinterfaces(anInterface, objectsToInspect, recursive);
 
 				if (recursive) {
 					inspectFieldClasses(null, anInterface, objectsToInspect, recursive);
 				}
-
-				inspectSuperinterfaces(anInterface, objectsToInspect, recursive);
 			}
 		}
 	}
@@ -170,29 +170,23 @@ public class ObjectInspector {
 
 	// -----------------------------------------------------------
 	private void inspectFieldClasses(Object obj, Class ObjClass,
-			Vector objectsToInspect, boolean recursive) {
+			Set<Object> objectsToInspect, boolean recursive) {
 
 		if (objectsToInspect.size() > 0)
 			System.out.println("---- Inspecting Field Classes ----");
 
-		// Enumeration e = objectsToInspect.elements();
-		// while (e.hasMoreElements()) {
-		// Field f = (Field) e.nextElement();
-		// System.out.println("Inspecting Field: " + f.getName());
-
-		// try {
-		// System.out.println("******************");
-		// inspect(f.get(obj), recursive);
-		// System.out.println("******************");
-		// } catch (Exception exp) {
-		// exp.printStackTrace();
-		// }
-		// }
+		System.out.println("Objects To Inspect:");
+		for (Object objectToInspect : objectsToInspect) {
+			inspect(objectToInspect, recursive);
+		}
+		for (Object objectClass : objectsToInspect) {
+			System.out.println(objectClass);
+		}
 	}
 
 	// -----------------------------------------------------------
-	private void inspectFields(Object obj, Class<?> objClass, Vector<Object> objectsToInspect,
-			Set<Class<?>> inspectedClasses) {
+	private void inspectFields(Object obj, Class<?> objClass, Set<Object> objectsToInspect,
+			Set<Class<?>> fieldClasses) {
 		Class<?> currentClass = objClass;
 
 		Field[] fields = currentClass.getDeclaredFields();
@@ -220,8 +214,8 @@ public class ObjectInspector {
 						for (int i = 0; i < length; i++) {
 							Object arrayElement = Array.get(fieldValue, i);
 							System.out.println("Element " + i + ": " + arrayElement);
-							if (fieldValue != null && !fieldType.isPrimitive()) {
-								objectsToInspect.addElement(fieldValue);
+							if (arrayElement != null && !fieldType.getComponentType().isPrimitive()) {
+								objectsToInspect.add(arrayElement);
 							}
 						}
 					} else {
@@ -229,7 +223,7 @@ public class ObjectInspector {
 					}
 
 					if (fieldValue != null && !fieldType.isPrimitive()) {
-						objectsToInspect.addElement(fieldValue);
+						objectsToInspect.add(fieldValue);
 					}
 				} catch (Exception e) {
 					// Handle exceptions when getting field value appropriately, e.g., log or throw
@@ -241,16 +235,10 @@ public class ObjectInspector {
 			}
 		}
 
-		currentClass = currentClass.getSuperclass();
-
 	}
 
-	private void inspectConstructors(Class<?> objClass, Set<Class<?>> inspectedClasses) {
+	private void inspectConstructors(Class<?> objClass, Set<Class<?>> fieldClasses) {
 		Class<?> currentClass = objClass;
-
-		// if (inspectedClasses.contains(currentClass)) {
-		// break; // Avoid re-inspecting the same class
-		// }
 
 		Constructor<?>[] constructors = currentClass.getDeclaredConstructors();
 
@@ -272,8 +260,6 @@ public class ObjectInspector {
 			}
 			System.out.println();
 		}
-
-		// inspectedClasses.add(currentClass);
 
 	}
 }
