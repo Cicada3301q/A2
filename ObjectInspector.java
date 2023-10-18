@@ -5,9 +5,9 @@ Date: October 15th 2023
 
 Desciption: A reflective object inspector
 //step 1 create all field, method, constructor inspector methods COMPLETED
-//Step 2 address superclass and interfaces
-//step 3 call inspectSuite on every object discovered, traverse hierachy up to Object. 
-//CHECK, do i properly handly arrays in all instances? in Method, in Field, in Constructor
+//Step 2 address superclass and interfaces COMPLETED
+//step 3 call inspectSuite on every object discovered if recursive is set to true, traverse hierachy up to Object. 
+//CHECK, do i properly handly arrays in all instances? in Method, in Field, in Constructor, Declaring class:, inside inspector:, return type:
 ========================================================================*/
 
 import java.util.*;
@@ -25,7 +25,12 @@ public class ObjectInspector {
 		Vector objectsToInspect = new Vector();
 		Class ObjClass = obj.getClass();
 
-		System.out.println("inside inspector: " + obj + " (recursive = " + recursive + ")");
+		System.out.print("inside inspector: ");
+		while (ObjClass.isArray()) {
+			ObjClass = ObjClass.getComponentType();
+			System.out.print("Array of ");
+		}
+		System.out.println(ObjClass.getName() + " (recursive = " + recursive + ")");
 
 		System.out.println("---- Printing Class Information ----");
 		inspectClassInformation(ObjClass);
@@ -138,7 +143,11 @@ public class ObjectInspector {
 			if (parameterTypes.length > 0) {
 				System.out.print("Parameter Types: ");
 				for (Class<?> parameterType : parameterTypes) {
-					System.out.print(parameterType.getName() + " ");
+					if (parameterType.isArray()) {
+						System.out.print(parameterType.getComponentType().getName() + "[] ");
+					} else {
+						System.out.print(parameterType.getName() + " ");
+					}
 				}
 				System.out.println();
 			} else {
@@ -211,6 +220,9 @@ public class ObjectInspector {
 						for (int i = 0; i < length; i++) {
 							Object arrayElement = Array.get(fieldValue, i);
 							System.out.println("Element " + i + ": " + arrayElement);
+							if (fieldValue != null && !fieldType.isPrimitive()) {
+								objectsToInspect.addElement(fieldValue);
+							}
 						}
 					} else {
 						System.out.println("Field Value: " + fieldValue);
@@ -252,7 +264,11 @@ public class ObjectInspector {
 
 			System.out.print("Parameter Types: ");
 			for (Class<?> parameterType : parameterTypes) {
-				System.out.print(parameterType.getName() + " ");
+				if (parameterType.isArray()) {
+					System.out.print(parameterType.getComponentType().getName() + "[] ");
+				} else {
+					System.out.print(parameterType.getName() + " ");
+				}
 			}
 			System.out.println();
 		}
