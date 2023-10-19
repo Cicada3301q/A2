@@ -198,6 +198,7 @@ public class ObjectInspector {
 	private void inspectFields(Object obj, Class<?> objClass, Set<Object> objectsToInspect,
 			Set<Class<?>> fieldClasses) {
 		Class<?> currentClass = objClass;
+
 		Field[] fields = currentClass.getDeclaredFields();
 
 		for (Field field : fields) {
@@ -217,10 +218,25 @@ public class ObjectInspector {
 
 				try {
 					Object fieldValue = field.get(obj);
-					inspectFieldValue(fieldValue, fieldType, objectsToInspect);
-				} catch (IllegalAccessException e) {
-					// Handle the IllegalAccessException here
-					System.out.println("Access to the field is restricted: " + e.getMessage());
+					if (fieldValue != null && fieldType.isArray()) {
+						int length = Array.getLength(fieldValue);
+						System.out.println("Array Length: " + length);
+						for (int i = 0; i < length; i++) {
+							Object arrayElement = Array.get(fieldValue, i);
+							System.out.println("Element " + i + ": " + arrayElement);
+							if (arrayElement != null && !fieldType.getComponentType().isPrimitive()) {
+								objectsToInspect.add(arrayElement);
+							}
+						}
+					} else {
+						System.out.println("Field Value: " + fieldValue);
+					}
+
+					if (fieldValue != null && !fieldType.isPrimitive()) {
+						objectsToInspect.add(fieldValue);
+					}
+				} catch (Exception e) {
+					// Handle exceptions when getting field value appropriately, e.g., log or throw
 				}
 			} catch (InaccessibleObjectException e) {
 				System.out.println("Object not accessible: " + e.getMessage());
@@ -228,28 +244,7 @@ public class ObjectInspector {
 				System.out.println("Security exception: " + e.getMessage());
 			}
 		}
-	}
 
-	private void inspectFieldValue(Object fieldValue, Class<?> fieldType, Set<Object> objectsToInspect) {
-		if (fieldValue != null) {
-			if (fieldType.isArray()) {
-				int length = Array.getLength(fieldValue);
-				System.out.println("Array Length: " + length);
-				for (int i = 0; i < length; i++) {
-					Object arrayElement = Array.get(fieldValue, i);
-					System.out.println("Element " + i + ": " + arrayElement);
-					if (arrayElement != null && !fieldType.getComponentType().isPrimitive()) {
-						objectsToInspect.add(arrayElement);
-					}
-				}
-			} else {
-				System.out.println("Field Value: " + fieldValue);
-			}
-
-			if (!fieldType.isPrimitive()) {
-				objectsToInspect.add(fieldValue);
-			}
-		}
 	}
 
 	private void inspectConstructors(Class<?> objClass, Set<Class<?>> fieldClasses) {
