@@ -6,7 +6,7 @@ Date: October 15th 2023
 Desciption: A reflective object inspector
 //step 1 create all field, method, constructor inspector methods COMPLETED
 //Step 2 address superclass and interfaces COMPLETED
-//step 3 call inspectSuite on every object discovered if recursive is set to true, traverse hierachy up to Object. 
+//step 3 call inspectSuite on every object discovered if recursive is set to true, traverse hierachy up to Object. Completed
 //CHECK, do i properly handly arrays in all instances? in Method, in Field, in Constructor, Declaring class:, inside inspector:, return type:
 ========================================================================*/
 
@@ -198,7 +198,6 @@ public class ObjectInspector {
 	private void inspectFields(Object obj, Class<?> objClass, Set<Object> objectsToInspect,
 			Set<Class<?>> fieldClasses) {
 		Class<?> currentClass = objClass;
-
 		Field[] fields = currentClass.getDeclaredFields();
 
 		for (Field field : fields) {
@@ -218,25 +217,10 @@ public class ObjectInspector {
 
 				try {
 					Object fieldValue = field.get(obj);
-					if (fieldValue != null && fieldType.isArray()) {
-						int length = Array.getLength(fieldValue);
-						System.out.println("Array Length: " + length);
-						for (int i = 0; i < length; i++) {
-							Object arrayElement = Array.get(fieldValue, i);
-							System.out.println("Element " + i + ": " + arrayElement);
-							if (arrayElement != null && !fieldType.getComponentType().isPrimitive()) {
-								objectsToInspect.add(arrayElement);
-							}
-						}
-					} else {
-						System.out.println("Field Value: " + fieldValue);
-					}
-
-					if (fieldValue != null && !fieldType.isPrimitive()) {
-						objectsToInspect.add(fieldValue);
-					}
-				} catch (Exception e) {
-					// Handle exceptions when getting field value appropriately, e.g., log or throw
+					inspectFieldValue(fieldValue, fieldType, objectsToInspect);
+				} catch (IllegalAccessException e) {
+					// Handle the IllegalAccessException here
+					System.out.println("Access to the field is restricted: " + e.getMessage());
 				}
 			} catch (InaccessibleObjectException e) {
 				System.out.println("Object not accessible: " + e.getMessage());
@@ -244,7 +228,28 @@ public class ObjectInspector {
 				System.out.println("Security exception: " + e.getMessage());
 			}
 		}
+	}
 
+	private void inspectFieldValue(Object fieldValue, Class<?> fieldType, Set<Object> objectsToInspect) {
+		if (fieldValue != null) {
+			if (fieldType.isArray()) {
+				int length = Array.getLength(fieldValue);
+				System.out.println("Array Length: " + length);
+				for (int i = 0; i < length; i++) {
+					Object arrayElement = Array.get(fieldValue, i);
+					System.out.println("Element " + i + ": " + arrayElement);
+					if (arrayElement != null && !fieldType.getComponentType().isPrimitive()) {
+						objectsToInspect.add(arrayElement);
+					}
+				}
+			} else {
+				System.out.println("Field Value: " + fieldValue);
+			}
+
+			if (!fieldType.isPrimitive()) {
+				objectsToInspect.add(fieldValue);
+			}
+		}
 	}
 
 	private void inspectConstructors(Class<?> objClass, Set<Class<?>> fieldClasses) {
