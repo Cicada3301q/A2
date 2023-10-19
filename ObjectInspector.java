@@ -172,15 +172,14 @@ public class ObjectInspector {
 	private void inspectFieldClasses(Object obj, Class ObjClass,
 			Set<Object> objectsToInspect, boolean recursive) {
 
-		if (objectsToInspect.size() > 0)
+		if (objectsToInspect.size() > 0) {
 			System.out.println("---- Inspecting Field Classes ----");
 
-		System.out.println("Objects To Inspect:");
-		for (Object objectToInspect : objectsToInspect) {
-			inspect(objectToInspect, recursive);
-		}
-		for (Object objectClass : objectsToInspect) {
-			System.out.println(objectClass);
+			for (Object objectClass : objectsToInspect) {
+				System.out.println("Currently inspecting Field Class:" + objectClass);
+				System.out.println("objects to inspect:" + objectsToInspect.size());
+				inspect(objectClass, recursive);
+			}
 		}
 	}
 
