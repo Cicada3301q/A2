@@ -43,7 +43,11 @@ public class ObjectInspector {
 
 		System.out.println("---- Printing Constructor Information ----");
 		inspectConstructors(ObjClass, fieldClasses);
+
+		System.out.println("---- Printing Inspect Superclass Information ----");
 		inspectSuperclasses(ObjClass, objectsToInspect, recursive);
+
+		System.out.println("---- Printing SuperInterfaces ----");
 		inspectSuperinterfaces(ObjClass, objectsToInspect, recursive);
 
 		if (recursive)
@@ -131,40 +135,47 @@ public class ObjectInspector {
 
 		for (Method method : methods) {
 			String methodName = method.getName();
-			Class<?>[] parameterTypes = method.getParameterTypes();
 			Class<?> returnType = method.getReturnType();
-			Class<?>[] exceptionTypes = method.getExceptionTypes();
 			int modifiers = method.getModifiers();
 
 			System.out.println("Method Name: " + methodName);
 			System.out.println("Return Type: " + returnType.getName());
 			System.out.println("Modifiers: " + Modifier.toString(modifiers));
 
-			if (parameterTypes.length > 0) {
-				System.out.print("Parameter Types: ");
-				for (Class<?> parameterType : parameterTypes) {
-					if (parameterType.isArray()) {
-						System.out.print(parameterType.getComponentType().getName() + "[] ");
-					} else {
-						System.out.print(parameterType.getName() + " ");
-					}
-				}
-				System.out.println();
-			} else {
-				System.out.println("Parameter Types: None");
-			}
-
-			if (exceptionTypes.length > 0) {
-				System.out.print("Exceptions Thrown: ");
-				for (Class<?> exceptionType : exceptionTypes) {
-					System.out.print(exceptionType.getName() + " ");
-				}
-				System.out.println();
-			} else {
-				System.out.println("Exceptions Thrown: None");
-			}
+			printParameterTypes(method);
+			printExceptionTypes(method);
 
 			System.out.println();
+		}
+	}
+
+	private void printParameterTypes(Method method) {
+		Class<?>[] parameterTypes = method.getParameterTypes();
+		if (parameterTypes.length > 0) {
+			System.out.print("Parameter Types: ");
+			for (Class<?> parameterType : parameterTypes) {
+				if (parameterType.isArray()) {
+					System.out.print(parameterType.getComponentType().getName() + "[] ");
+				} else {
+					System.out.print(parameterType.getName() + " ");
+				}
+			}
+			System.out.println();
+		} else {
+			System.out.println("Parameter Types: None");
+		}
+	}
+
+	private void printExceptionTypes(Method method) {
+		Class<?>[] exceptionTypes = method.getExceptionTypes();
+		if (exceptionTypes.length > 0) {
+			System.out.print("Exceptions Thrown: ");
+			for (Class<?> exceptionType : exceptionTypes) {
+				System.out.print(exceptionType.getName() + " ");
+			}
+			System.out.println();
+		} else {
+			System.out.println("Exceptions Thrown: None");
 		}
 	}
 
